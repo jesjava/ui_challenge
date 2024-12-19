@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:bounce/bounce.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -25,12 +26,13 @@ class _HomePageState extends State<HomePage> {
   List musicName = [
     "freyanashifa",
     "kaulah juaranya",
-    "putri fantasi"
+    "putri fantasi",
   ];
 
   @override
   void initState() {
     super.initState();
+    player.setLoopMode(LoopMode.one);
     player.setAudioSource(
       playlist,
       initialIndex: 0,
@@ -173,7 +175,8 @@ class _HomePageState extends State<HomePage> {
                                   height: 30,
                                   decoration: BoxDecoration(
                                     color: Colors.white,
-                                    borderRadius: BorderRadius.circular(50),
+                                    borderRadius:
+                                        BorderRadius.circular(50),
                                   ),
                                   child: const Text(
                                     "DOWNLOAD",
@@ -229,8 +232,11 @@ class _HomePageState extends State<HomePage> {
         ),
         Align(
           alignment: Alignment.center,
-          child: Image.asset(
-            "images/foreground.png",
+          child: Transform.translate(
+            offset: const Offset(0, 50),
+            child: Image.asset(
+              "images/foreground.png",
+            ),
           ),
         ),
         Align(
@@ -288,7 +294,7 @@ class _HomePageState extends State<HomePage> {
                 const Spacer(flex: 1),
                 Transform.flip(
                   flipX: true,
-                  child: GestureDetector(
+                  child: Bounce(
                     onTap: () {
                       setState(() {
                         backward();
@@ -302,7 +308,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 const SizedBox(width: 20),
-                GestureDetector(
+                Bounce(
                   onTap: () {
                     setState(() {
                       if (player.playing) {
@@ -335,7 +341,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 const SizedBox(width: 20),
-                GestureDetector(
+                Bounce(
                   onTap: () {
                     setState(() {
                       forward();
@@ -361,11 +367,15 @@ class _HomePageState extends State<HomePage> {
     if (playlistIndex == (musicName.length - 1)) {
       playlistIndex = 0;
       player.seek(Duration.zero, index: playlistIndex);
-      player.play();
+      if (isPlay) {
+        player.play();
+      }
     } else {
       playlistIndex++;
       player.seek(Duration.zero, index: playlistIndex);
-      player.play();
+      if (isPlay) {
+        player.play();
+      }
     }
   }
 
@@ -374,11 +384,15 @@ class _HomePageState extends State<HomePage> {
     if (playlistIndex == 0) {
       playlistIndex = (musicName.length - 1);
       player.seek(Duration.zero, index: playlistIndex);
-      player.play();
+      if (isPlay) {
+        player.play();
+      }
     } else {
       playlistIndex--;
       player.seek(Duration.zero, index: playlistIndex);
-      player.play();
+      if (isPlay) {
+        player.play();
+      }
     }
   }
 

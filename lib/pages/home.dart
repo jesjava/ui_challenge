@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -10,14 +11,32 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   bool isPlay = false;
-  int songIndex = 0;
-  List song = [
-    "DAYLIGHT",
-    "VIVA LA VIDA",
-    "HEAT WAVES",
-    "NIGHT CHANGES",
-    "TO THE BONE",
+  bool isLoaded = false;
+  int playlistIndex = 0;
+  final player = AudioPlayer();
+  final playlist = ConcatenatingAudioSource(
+    useLazyPreparation: true,
+    children: [
+      AudioSource.asset("music/freyanashifa.mp3"),
+      AudioSource.asset("music/kaulah_juaranya.mp3"),
+      AudioSource.asset("music/putri_fantasi.mp3"),
+    ],
+  );
+  List musicName = [
+    "freyanashifa",
+    "kaulah juaranya",
+    "putri fantasi"
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    player.setAudioSource(
+      playlist,
+      initialIndex: 0,
+      initialPosition: Duration.zero,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,10 +97,15 @@ class _HomePageState extends State<HomePage> {
                           height: 35,
                         ),
                         const Spacer(flex: 1),
-                        const Icon(
-                          Icons.search_rounded,
-                          size: 35,
-                          color: Colors.white,
+                        GestureDetector(
+                          onTap: () {
+                            // CODE HERE
+                          },
+                          child: const Icon(
+                            Icons.search_rounded,
+                            size: 35,
+                            color: Colors.white,
+                          ),
                         ),
                         const SizedBox(width: 50),
                       ],
@@ -116,7 +140,7 @@ class _HomePageState extends State<HomePage> {
                               width: 270,
                               color: Colors.transparent,
                               child: const Text(
-                                "Berbalut warna ungu, dia menari menjalani kehidupan dengan keanggunan kupu-kupu dan semangat seorang pemimpi - Freya, sebuah simfoni kelucuan dalam langkah yang diambilnya",
+                                "Gadis koleris yang terangi harimu dengan senyum karamelku, halo semuanya aku freya",
                                 textAlign: TextAlign.start,
                                 style: TextStyle(
                                   fontFamily: "Nunito",
@@ -203,12 +227,10 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
         ),
-        Transform.translate(
-          offset: const Offset(0, 0),
+        Align(
+          alignment: Alignment.center,
           child: Image.asset(
             "images/foreground.png",
-            width: deviceWidth,
-            height: deviceHeight,
           ),
         ),
         Align(
@@ -252,7 +274,7 @@ class _HomePageState extends State<HomePage> {
                       width: 200,
                       color: Colors.transparent,
                       child: Text(
-                        song[songIndex],
+                        "${musicName[playlistIndex]}".toUpperCase(),
                         style: const TextStyle(
                           fontFamily: "Nunito",
                           fontSize: 13,
@@ -269,11 +291,7 @@ class _HomePageState extends State<HomePage> {
                   child: GestureDetector(
                     onTap: () {
                       setState(() {
-                        if (songIndex == 0) {
-                          songIndex = (song.length - 1);
-                        } else {
-                          songIndex--;
-                        }
+                        backward();
                       });
                     },
                     child: Image.asset(
@@ -287,24 +305,40 @@ class _HomePageState extends State<HomePage> {
                 GestureDetector(
                   onTap: () {
                     setState(() {
-                      isPlay = !isPlay;
+                      if (player.playing) {
+                        isPlay = false;
+                        player.pause();
+                      } else {
+                        isPlay = true;
+                        player.play();
+                      }
                     });
                   },
-                  child: Image.asset(
-                    isPlay ? "icons/pause.png" : "icons/play.png",
-                    width: 40,
-                    height: 40,
+                  child: StreamBuilder<ProcessingState>(
+                    stream: player.playerStateStream
+                        .map((state) => state.processingState),
+                    builder: (context, snapshot) {
+                      final state = snapshot.data;
+                      if (state == ProcessingState.loading ||
+                          state == ProcessingState.buffering) {
+                        return const CircularProgressIndicator(
+                          color: Colors.white,
+                        );
+                      } else {
+                        return Image.asset(
+                          isPlay ? "icons/pause.png" : "icons/play.png",
+                          width: 40,
+                          height: 40,
+                        );
+                      }
+                    },
                   ),
                 ),
                 const SizedBox(width: 20),
                 GestureDetector(
                   onTap: () {
                     setState(() {
-                      if (songIndex == (song.length - 1)) {
-                        songIndex = 0;
-                      } else {
-                        songIndex++;
-                      }
+                      forward();
                     });
                   },
                   child: Image.asset(
@@ -320,5 +354,37 @@ class _HomePageState extends State<HomePage> {
         ),
       ],
     );
+  }
+
+  void forward() {
+    player.pause();
+    if (playlistIndex == (musicName.length - 1)) {
+      playlistIndex = 0;
+      player.seek(Duration.zero, index: playlistIndex);
+      player.play();
+    } else {
+      playlistIndex++;
+      player.seek(Duration.zero, index: playlistIndex);
+      player.play();
+    }
+  }
+
+  void backward() {
+    player.pause();
+    if (playlistIndex == 0) {
+      playlistIndex = (musicName.length - 1);
+      player.seek(Duration.zero, index: playlistIndex);
+      player.play();
+    } else {
+      playlistIndex--;
+      player.seek(Duration.zero, index: playlistIndex);
+      player.play();
+    }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    player.dispose();
   }
 }
